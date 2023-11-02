@@ -1,13 +1,15 @@
 # db-migrator-r2dbc
 A lightweight DB Migrator for Spring Boot which runs migration SQLs on application startup.
 
-This should work with most reactive Spring Boot web applications, which use Spring Data R2DBC as the database
-access layer.
+Migrations run before `ApplicationRunner`s run. For web applications, also before server ready to accept requests.
 
-Requires Spring Boot 3.x or above.
-Tested with Spring Boot 3.1.5 and MySQL 8.0.
+Although R2DBC is known for its non blocking nature, migrations are run in blocking way by calling `Publisher.block()`. This project aims to make it possible for reactive applications to run blocking migrations without having to introduce JDBC related components, which should be avoided in business logic.
+
+This should work with most reactive Spring Boot applications, which use Spring Data R2DBC as the database access layer, and MySQL as database.
 
 ## build
+Requires JDK 17, Spring Boot 3.x or above.
+Tested with Spring Boot 3.1.5 and MySQL 8.0.
 ```
 ./gradlew clean build
 ```
@@ -47,3 +49,8 @@ The migrator acts like simplified Flyway.
    - If migration fails, the corresponding migration history record will be saved as succeeded = 0, and the
    whole application will halt immediately. Please fix the DB manually, set succeeded = 1 for failed version,
    and restart the application.
+
+## todos
+
+1. log in English.
+2. run migrations in transactions.
