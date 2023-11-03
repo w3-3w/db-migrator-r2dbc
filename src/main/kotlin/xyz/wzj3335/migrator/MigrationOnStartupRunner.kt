@@ -24,11 +24,13 @@ class MigrationOnStartupRunner(
 
     override fun onApplicationEvent(event: ApplicationStartedEvent) {
         if (!properties.enabled) return
-        databaseClient.sql(
-            event.applicationContext
-                .getResource("classpath:${this::class.java.packageName.replace('.', '/')}/migration_history.sql")
-                .getContentAsString(Charsets.UTF_8)
-        ).fetch().rowsUpdated().block()
+        if (properties.initTable) {
+            databaseClient.sql(
+                event.applicationContext
+                    .getResource("classpath:${this::class.java.packageName.replace('.', '/')}/migration_history_mysql.sql")
+                    .getContentAsString(Charsets.UTF_8)
+            ).fetch().rowsUpdated().block()
+        }
         val existingMigrations = migrationHistoryRepository.findByOrderByMigrationVersionAsc()
 
         val fileMigrations = event.applicationContext.getResources("${properties.location}/*.sql")

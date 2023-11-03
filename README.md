@@ -1,9 +1,9 @@
 # db-migrator-r2dbc
 A lightweight DB Migrator for Spring Boot which runs migration SQLs on application startup.
 
-Migrations run before `ApplicationRunner`s run. For web applications, also before server ready to accept requests.
+Migration runs before `ApplicationRunner`s and `CommandLineRunner`s run. For web applications, it also runs before server ready to accept requests.
 
-Although R2DBC is known for its non blocking nature, migrations are run in blocking way by calling `Publisher.block()`. This project aims to make it possible for reactive applications to run blocking migrations without having to introduce JDBC related components, which should be avoided in business logic.
+Although R2DBC is known for its non-blocking nature, migrations are run in blocking way. This project aims to make it possible for reactive applications to run blocking migrations without having to introduce JDBC related components, which should be avoided in business logic.
 
 This should work with most reactive Spring Boot applications, which use Spring Data R2DBC as the database access layer, and MySQL as database.
 
@@ -30,10 +30,22 @@ The constructor of `MigrationOnStartupRunner` takes 2 parameters: `R2dbcEntityTe
 ### properties
 All property names have a prefix of `migrator`.
 
-| name       | type    | description                        | default value          |
-|------------|---------|------------------------------------|------------------------|
-| `enabled`  | Boolean | whether to enable the migrator     | `false`                |
-| `location` | String  | the location of the migration SQLs | `classpath:migrations` |
+| name         | type    | description                                   | default value          |
+|--------------|---------|-----------------------------------------------|------------------------|
+| `enabled`    | Boolean | whether to enable the migrator                | `false`                |
+| `init-table` | Boolean | whether try to create migration history table | `true`                 |
+| `location`   | String  | the location of the migration SQLs            | `classpath:migrations` |
+
+### migration history table
+In case you are using database other than MySQL, you may set `init-table` property to `false` and create the migration history table manually. The table should be named `migration_history` and have the following structure:
+
+| column name         | type        | description                                                    |
+|---------------------|-------------|----------------------------------------------------------------|
+| `migration_version` | `INT`       | primary key                                                    |
+| `filename`          | `VARCHAR`   | filename of the migration SQL, e.g. `v1_init.sql`              |
+| `checksum`          | `BIGINT`    | checksum of migration SQL                                      |
+| `succeeded`         | `BIT`       | whether the migration succeeded, 1 for succeeded, 0 for failed |
+| `created_at`        | `TIMESTAMP` | when the migration was first run                               |
 
 ### migration SQLs
 Migration SQLs should be named as `v{version}{optionalName}.sql`, e.g. `v1_init.sql`.
@@ -54,3 +66,4 @@ The migrator acts like simplified Flyway.
 
 1. log in English.
 2. run migrations in transactions.
+3. option to use separated connection for migration.
