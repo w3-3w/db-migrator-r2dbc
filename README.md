@@ -43,7 +43,7 @@ In case you are using database other than MySQL, you may set `init-table` proper
 |---------------------|-------------|----------------------------------------------------------------|
 | `migration_version` | `INT`       | primary key                                                    |
 | `filename`          | `VARCHAR`   | filename of the migration SQL, e.g. `v1_init.sql`              |
-| `checksum`          | `BIGINT`    | checksum of migration SQL                                      |
+| `checksum`          | `BIGINT`    | nullable checksum of migration SQL                             |
 | `succeeded`         | `BIT`       | whether the migration succeeded, 1 for succeeded, 0 for failed |
 | `created_at`        | `TIMESTAMP` | when the migration was first run                               |
 
