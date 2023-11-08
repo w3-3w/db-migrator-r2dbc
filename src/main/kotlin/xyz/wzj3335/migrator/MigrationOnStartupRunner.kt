@@ -37,36 +37,36 @@ class MigrationOnStartupRunner(
             .filter { it.filename?.matches(Regex("""v\d+.*\.sql""")) ?: false }
             .groupBy { Regex("\\d+").find(it.filename!!)?.value?.toInt()!! }
             .mapValues { (version, resources) ->
-                if (resources.size > 1) error("マイグレーションバージョンが重複しています。 version=$version")
+                if (resources.size > 1) error("Multiple files with same version number found: version=$version")
                 resources.first()
             }
-            .toSortedMap { o1, o2 -> o1.compareTo(o2) }
+            .toSortedMap(Int::compareTo)
 
         val existingLastVersion = existingMigrations.zipWithIterable(fileMigrations.entries) { record, (fileVersion, resource) ->
             if (record.migrationVersion != fileVersion) {
-                error("マイグレーションバージョンチェック失敗。失敗箇所：DBバージョン=${record.migrationVersion}, ファイルバージョン=$fileVersion")
+                error("Migration version check failure: version in DB=${record.migrationVersion}, version of file=$fileVersion")
             }
             if (record.filename != resource.filename) {
-                error("マイグレーションファイル名チェック失敗。失敗箇所：バージョン=${record.migrationVersion}, DBファイル名=${record.filename}, ファイルファイル名=${resource.filename}")
+                error("Migration filename check failure: version=${record.migrationVersion}, filename in DB=${record.filename}, filename=${resource.filename}")
             }
             if (!record.succeeded) {
-                error("マイグレーションレコードが失敗のままになっています。手動でDB状態を修正し、レコードの状態を成功に変えてください。失敗箇所：バージョン=${record.migrationVersion}")
+                error("Migration history record is left as not succeeded. Fix DB manually and update the record as succeeded. version=${record.migrationVersion}")
             }
             val fileChecksum = resource.contentAsByteArray.calcSum()
             if (record.checksum == null) {
-                log.info("マイグレーションchecksum: version=${record.migrationVersion}, checksum=$fileChecksum")
+                log.warn("Migration checksum in DB is null: version=${record.migrationVersion}, file checksum=$fileChecksum")
             } else if (record.checksum != fileChecksum) {
-                error("マイグレーションファイル中身チェック失敗。失敗箇所：バージョン=${record.migrationVersion}")
+                error("Migration checksum check failure: version=${record.migrationVersion}")
             }
             record.migrationVersion
         }.blockLast() ?: 0
 
-        log.info("DBマイグレーションを開始します。実行前のマイグレーションバージョン: $existingLastVersion")
+        log.info("Start DB migration process. Current version=$existingLastVersion")
         val migratedVersionCount = fileMigrations.tailMap(existingLastVersion + 1)
             .onEach { (version, resource) ->
                 val filename = resource.filename!!
                 val fileContent = resource.contentAsByteArray
-                log.info("マイグレーション実行: version=$version, filename=$filename")
+                log.info("Run migration: version=$version, filename=$filename")
                 try {
                     databaseClient.sql(fileContent.toString(Charsets.UTF_8)).fetch().rowsUpdated().block()
                 } catch (e: Exception) {
@@ -90,6 +90,6 @@ class MigrationOnStartupRunner(
                 ).block()
             }
             .size
-        log.info("DBマイグレーションが完了しました。マイグレーション実行数: $migratedVersionCount")
+        log.info("Finished DB migration process. $migratedVersionCount files executed.")
     }
 }
