@@ -24,17 +24,15 @@ dependencies {
 If it fails to autoconfigure, you may switch to `implementation`, and register
 `xyz.wzj3335.migrator.MigrationOnStartupRunner` as a bean manually.
 
-The constructor of `MigrationOnStartupRunner` takes 2 parameters: `R2dbcEntityTemplate` and
-`MigratorProperties`.
-
 ### properties
 All property names have a prefix of `migrator`.
 
-| name         | type    | description                                   | default value          |
-|--------------|---------|-----------------------------------------------|------------------------|
-| `enabled`    | Boolean | whether to enable the migrator                | `false`                |
-| `init-table` | Boolean | whether try to create migration history table | `true`                 |
-| `location`   | String  | the location of the migration SQLs            | `classpath:migrations` |
+| name                     | type    | description                                       | default value          |
+|--------------------------|---------|---------------------------------------------------|------------------------|
+| `enabled`                | Boolean | whether to enable the migrator                    | `false`                |
+| `init-table`             | Boolean | whether try to create migration history table     | `true`                 |
+| `location`               | String  | the location of the migration SQLs                | `classpath:migrations` |
+| `execute-in-transaction` | Boolean | whether to execute migration SQLs in transactions | `true`                 |
 
 ### migration history table
 In case you are using database other than MySQL, you may set `init-table` property to `false` and create the migration history table manually. The table should be named `migration_history` and have the following structure:
@@ -64,6 +62,4 @@ The migrator acts like simplified Flyway.
 
 ## todos
 
-1. log in English.
-2. run migrations in transactions.
-3. option to use separated connection for migration.
+1. option to use separated connection for migration.

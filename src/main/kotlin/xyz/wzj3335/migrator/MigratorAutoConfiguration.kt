@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.data.r2dbc.R2dbcDataAutoConfigurat
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.transaction.reactive.TransactionalOperator
 
 @AutoConfiguration(after = [R2dbcDataAutoConfiguration::class])
 @ConditionalOnClass(R2dbcEntityTemplate::class)
@@ -16,6 +17,10 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 class MigratorAutoConfiguration {
     @Bean
     @ConditionalOnSingleCandidate(R2dbcEntityTemplate::class)
-    fun migrationOnStartupRunner(entityTemplate: R2dbcEntityTemplate, properties: MigratorProperties) =
-        MigrationOnStartupRunner(entityTemplate, properties)
+    fun migrationOnStartupRunner(
+        entityTemplate: R2dbcEntityTemplate,
+        transactionalOperator: TransactionalOperator?,
+        properties: MigratorProperties
+    ) =
+        MigrationOnStartupRunner(entityTemplate, transactionalOperator, properties)
 }

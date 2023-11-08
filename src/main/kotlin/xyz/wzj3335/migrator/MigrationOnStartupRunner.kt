@@ -5,10 +5,12 @@ import org.springframework.boot.context.event.ApplicationStartedEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory
+import org.springframework.transaction.reactive.TransactionalOperator
 import java.util.zip.CRC32
 
 class MigrationOnStartupRunner(
     entityTemplate: R2dbcEntityTemplate,
+    private val transactionalOperator: TransactionalOperator?,
     private val properties: MigratorProperties,
 ) : ApplicationListener<ApplicationStartedEvent> {
     private val log = LogFactory.getLog(javaClass)
@@ -68,7 +70,12 @@ class MigrationOnStartupRunner(
                 val fileContent = resource.contentAsByteArray
                 log.info("Run migration: version=$version, filename=$filename")
                 try {
-                    databaseClient.sql(fileContent.toString(Charsets.UTF_8)).fetch().rowsUpdated().block()
+                    val execution = databaseClient.sql(fileContent.toString(Charsets.UTF_8)).fetch().rowsUpdated()
+                    if (properties.executeInTransaction) {
+                        transactionalOperator!!.transactional(execution).block()
+                    } else {
+                        execution.block()
+                    }
                 } catch (e: Exception) {
                     migrationHistoryRepository.save(
                         MigrationHistoryEntity(
