@@ -10,7 +10,7 @@ import java.time.Instant
 
 @Table("migration_history")
 @Immutable
-data class MigrationHistoryEntity(
+internal data class MigrationHistoryEntity(
     @Id
     val migrationVersion: Int,
     val filename: String,
